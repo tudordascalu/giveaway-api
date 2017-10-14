@@ -6,7 +6,7 @@ export class Items
   id: string;
   category: string;
   owner: string;
-  pending: string[];
+  pending = [];
   name: string;
   description: string;
   imgURL: string[];
@@ -32,6 +32,10 @@ export class Items
     const site: any = new Items(data);
     // Do setup specific for websites created from a database query here
     return site;
+  }
+
+  public bookItem(data: string) {
+    this.pending ? this.pending.push(data) : this.pending[0] = data
   }
 
   // public updateRecipients(data: { deleteRecipients: string[], addRecipients: string[] })

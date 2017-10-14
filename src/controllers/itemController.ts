@@ -67,6 +67,25 @@ export class ItemController
     );
   }
 
+  public static getBookedItems(req: Request, res: Response, next: Function)
+  {
+
+    DataStore.local.items.find({ pending: req.params.userID }, {},
+      (err, dbData) =>
+      {
+        if (err || dbData.length === 0) { return HTTPResponse.error(res, 'no items or you can not access them', 400); }
+        
+        let itemList = [];
+        for (let i = 0; i < dbData.length; i++)
+        {
+          const item = Items.fromDatastore(dbData[0]);
+          itemList.push(item.responseData);
+        }
+        HTTPResponse.json(res, itemList);
+      },
+    );
+  }
+
   public static deleteItem(req: Request, res: Response, next: Function)
   {
     const user = res.locals.username;
@@ -106,6 +125,36 @@ export class ItemController
     );
   }
 
+  public static bookItem( req: Request, res: Response, next: Function ) {
+    
+    const body = req.body;
+    
+    let missing;
+    if (missing = HTTPBody.missingFields(body, ['userID'],))
+    { return HTTPResponse.missing(res, missing, 'body'); }
+
+    DataStore.local.items.find({ id: req.params.id }, {}, 
+      (err, dbData) =>
+      { console.log(err);
+        if (err || dbData.length === 0) { return HTTPResponse.error(res, 'item does not exist or you cannot access it', 400); }
+        let item = new Items(dbData[0]);
+        item.bookItem(body.userID);
+        
+        DataStore.local.items.addOrUpdate({ id: item.id}, item, {},
+          (err, dbData) =>
+          {
+            if (err) { return HTTPResponse.error(res, 'error adding you to the queue', 400)}
+            
+            const item = Items.fromDatastore(dbData[0]);
+            HTTPResponse.success(res);
+          },
+        );
+      },
+    );
+
+  }
+
+  
   // public static updateList(req: Request, res: Response, next: Function)
   // {
   //   const user = res.locals.username;
